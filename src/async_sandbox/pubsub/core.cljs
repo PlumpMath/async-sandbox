@@ -26,10 +26,9 @@
 (defn hook-coords-display!
   "Subscribe to event type and update element with every message."
   [p event-type el]
-  (let [c (sub p event-type (chan))]
-    (go (while true
-          (let [msg (<! c)]
-            (dom/setTextContent el (coords-str msg)))))))
+  (let [c (->> (sub p event-type (chan))
+               (map< coords-str))]
+    (go (while true (dom/setTextContent el (<! c))))))
 
 (let [;; get a chan and perform event->msg transformation
       event-chan (->> (listen-chan (.-body js/document) [:mousedown :mousemove])
