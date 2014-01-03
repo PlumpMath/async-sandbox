@@ -23,25 +23,21 @@
 (defn coords-str [msg]
   (str (:client-x msg) ", " (:client-y msg)))
 
-(let [event-chan (->> (listen-chan (.-body js/document) [:mousedown :mousemove])
-                      ;; chan an event->msg transformation
+(defn hook-coords-display!
+  "Subscribe to event type and update element with every message."
+  [p event-type el]
+  (let [c (sub p event-type (chan))]
+    (go (while true
+          (let [msg (<! c)]
+            (dom/setTextContent el (coords-str msg)))))))
+
+(let [;; get a chan and perform event->msg transformation
+      event-chan (->> (listen-chan (.-body js/document) [:mousedown :mousemove])
                       (map< event->msg))
 
       ;; create a pub
-      p (pub event-chan :type)
-
-      ;; subscribe two different channels on the same pub with two
-      ;; different topics
-      click-chan (sub p :mousedown (chan))
-      mouse-chan (sub p :mousemove (chan))
-
-      click-coords (dom/getElement "click-coords")
-      mouse-coords (dom/getElement "mouse-coords")]
+      p (pub event-chan :type)]
 
   ;; two go loops feed events from two different subscriptions
-  (go (while true
-        (let [msg (<! click-chan)]
-          (dom/setTextContent click-coords (coords-str msg)))))
-  (go (while true
-        (let [msg (<! mouse-chan)]
-          (dom/setTextContent mouse-coords (coords-str msg))))))
+  (hook-coords-display! p :mousedown (dom/getElement "click-coords"))
+  (hook-coords-display! p :mousemove (dom/getElement "mouse-coords")))

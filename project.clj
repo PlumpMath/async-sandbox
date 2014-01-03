@@ -20,5 +20,5 @@
                        {:id "pubsub"
                         :source-paths ["src/async_sandbox/pubsub"]
                         :compiler {:output-to "resources/gen-js/pubsub.js"
-                                   :optimizations :whitespace
-                                   :pretty-print true}}]})
+                                   :optimizations :advanced
+                                   :pretty-print false}}]})
