@@ -4,7 +4,11 @@
             [goog.events :as events]
             [cljs.core.async :refer [chan put! <! map< map> mult pub sub tap untap]]))
 
-(defn listen-chan [el types]
+;; This file demonstrates the new pub/sub functionality of core.async
+
+(defn listen-chan
+  "Create a channel to which all events of specified types are fed."
+  [el types]
   (if-not (coll? types)
     (listen-chan el [types])
     (let [c (chan)]
@@ -21,13 +25,18 @@
 
 (let [event-chan (->> (listen-chan (.-body js/document) [:mousedown :mousemove])
                       (map< event-msg))
-      p (pub event-chan :type)
+      p (pub event-chan :type) ;; create a pub
       click-chan (chan)
       mouse-chan (chan)
       click-coords (dom/getElement "click-coords")
       mouse-coords (dom/getElement "mouse-coords")]
+
+  ;; subscribe two different channels on the same pub with two
+  ;; different topics
   (sub p :mousedown click-chan)
   (sub p :mousemove mouse-chan)
+
+  ;; two go loops feed events from two different subscriptions
   (go (while true
         (let [msg (<! click-chan)]
           (dom/setTextContent click-coords (coords-str msg)))))
